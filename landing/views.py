@@ -1,4 +1,3 @@
-# Create your views here.
 import json
 
 from django.core.mail import send_mail
@@ -15,8 +14,9 @@ class IndexView(generic.ListView):
 	"""
 	A view to show the index page
 	"""
-	model = Category
-	queryset = Category.objects.filter()
+	# With queryset there is no need for model
+	# .filter() == .all()
+	queryset = Category.objects.all()
 	template_name = 'landing/index.html'
 
 	def get_context_data(self, *, object_list=None, **kwargs):
@@ -60,6 +60,5 @@ class ContactView(FormView):
 	def get_context_data(self, **kwargs):
 		location_list = list(Location.objects.order_by('name').values())
 		location_json = json.dumps(location_list)
-		# print('sad',location_json)
 		kwargs['locations'] = location_json
 		return super().get_context_data(**kwargs)
