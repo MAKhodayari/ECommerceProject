@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -8,10 +8,11 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, RedirectView, TemplateView, ListView
 from rest_framework.generics import CreateAPIView, DestroyAPIView, UpdateAPIView
+from rest_framework.viewsets import ModelViewSet
 
 from core.models import User
 from core.utils import cookie_to_database
-from customer.forms import CustomerSignupForm, CustomerLoginForm
+from customer.forms import CustomerSignupForm
 from customer.models import Customer, Address
 from customer.serializers import AddressSerializer, CustomerSerializer
 from order.models import Order
@@ -63,13 +64,12 @@ class CustomerLoginView(FormView):
 	"""
 	A view for customer login
 	"""
-	form_class = CustomerLoginForm
+	form_class = AuthenticationForm
 	template_name = "customer/reg_login.html"
 	success_url = reverse_lazy('landing:index')
-	success_message = _("Welcome") + " %(username)s !"
+	# Remove unnecessary success_message
 
-	def form_invalid(self, form):
-		return super().form_invalid(form)
+	# Remove unchanged form_invalid function
 
 	def form_valid(self, form):
 		"""
@@ -91,7 +91,8 @@ class CustomerLoginView(FormView):
 		:param kwargs:
 		:return:
 		"""
-		kwargs['login_form'] = CustomerLoginForm()
+		# Change duplicate login_form
+		kwargs['login_form'] = self.get_form()
 		kwargs['signup_form'] = CustomerSignupForm()
 		return super().get_context_data(**kwargs)
 
@@ -110,7 +111,9 @@ class CustomerSignupView(FormView):
 		:param form:
 		:return:
 		"""
-		form.save()
+		# Login user after registration
+		user = form.save()
+		login(self.request, user)
 		return super().form_valid(form)
 
 	def form_invalid(self, form):
@@ -119,10 +122,10 @@ class CustomerSignupView(FormView):
 		:param form:
 		:return:
 		"""
-		phone = form.data.get('phone')
+		phone = form.data.get('phone', )
 		same_user = User.objects.filter(phone=phone, is_active=False)
-		if same_user and form.data.get('password1') == form.data.get('password2') and form.data.get(
-				'password1') is not None:
+		if same_user and form.data.get('password1', ) == form.data.get('password2', ) and form.data.get(
+				'password1', ) is not None:
 			same_user: User
 			same_user.is_active = True
 			return super().form_valid(form)
@@ -134,8 +137,9 @@ class CustomerSignupView(FormView):
 		:param kwargs:
 		:return:
 		"""
-		kwargs['login_form'] = CustomerLoginForm()
-		kwargs['signup_form'] = CustomerSignupForm()
+		kwargs['login_form'] = AuthenticationForm()
+		# Change duplicate login_form
+		kwargs['signup_form'] = self.get_form()
 		return super().get_context_data(**kwargs)
 
 
@@ -193,6 +197,18 @@ class DeleteAddressesView(LoginRequiredMixin, DestroyAPIView):
 	queryset = Address.objects.all()
 
 
+# Add view set for addresses
+class AddressViewSet(LoginRequiredMixin, ModelViewSet):
+	serializer_class = AddressSerializer
+	queryset = Address.objects.all()
+
+	def create(self, request, *args, **kwargs):
+		request.data._mutable = True
+		customer = Customer.objects.get(user=self.request.user)
+		request.data['customer'] = customer.id
+		return super().create(request, *args, **kwargs)
+
+
 class ProfileView(LoginRequiredMixin, ListView):
 	"""
 	A view for showing the customer brief information.
@@ -208,7 +224,8 @@ class ProfileView(LoginRequiredMixin, ListView):
 		:param kwargs:
 		:return:
 		"""
-		customer = Customer.objects.filter(user=self.request.user)[0]
+		# Use get to access customer
+		customer = Customer.objects.get(user=self.request.user)
 		context = {'items': customer}
 		template_str = render_to_string(template_name='customer/profile.html', context=context)
 		return JsonResponse({'customer': template_str})
@@ -229,7 +246,8 @@ class Dashboard(LoginRequiredMixin, ListView):
 	queryset = Order.objects.all()
 
 	def get(self, request, *args, **kwargs):
-		customer = Customer.objects.filter(user=self.request.user)[0]
+		# Use get to access customer
+		customer = Customer.objects.get(user=self.request.user)
 		context = {'items': customer}
 		template_str = render_to_string(template_name='customer/dashboard.html', context=context)
 		return JsonResponse({'customer': template_str})
@@ -255,14 +273,13 @@ class PasswordChange(LoginRequiredMixin, FormView):
 		return kwargs
 
 	def form_valid(self, form):
-		print('done change password')
-		# print(self.request.data['new_password1'])
-		# print(self.request.data['new_password2'])
+		# Remove prints
 		messages.success(self.request, 'Done!!!!')
 		form.save()
 		return super().form_valid(form)
 
 	def form_invalid(self, form):
-		print('not done')
-		messages.success(self.request, 'Error!!!!')
+		# Remove prints
+		# Use message error instead of message success
+		messages.error(self.request, 'Error!!!!')
 		return super().form_invalid(form)

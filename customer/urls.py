@@ -1,7 +1,8 @@
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 
-from .views import CustomerSignupView, CustomerLoginView, LogoutView, PanelView, OrderView, AddressView, \
-	DeleteAddressesView, AddAddressesView, ProfileView, UpdateProfileView, PasswordChange
+# Better imports
+from customer.views import *
 
 # The urls of customer app.
 urlpatterns = [
@@ -17,3 +18,8 @@ urlpatterns = [
 	path('panel/profile/update/<int:pk>', UpdateProfileView.as_view(), name='update_profile'),
 	path('panel/profile/password/', PasswordChange.as_view(), name='password'),
 ]
+
+router = DefaultRouter()
+router.register('addresses', AddressViewSet)
+
+urlpatterns += router.urls

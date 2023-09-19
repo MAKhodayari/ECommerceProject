@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 from core.models import BaseModel, User
 
 
@@ -10,15 +9,15 @@ class Customer(BaseModel):
 	"""
 	user = models.OneToOneField(to=User, on_delete=models.CASCADE)
 	name = models.CharField(max_length=50, default='No Name', help_text="Customer name", null=True, blank=True)
-	email = models.EmailField(max_length=50, default="ex@2xample.com", null=False, help_text="Customer email",
-							  blank=True)
-	phone = models.CharField(max_length=16, default="09122222222", null=False, help_text="Customer phone number",
-							 blank=True)
+	email = models.EmailField(
+		max_length=50, default="ex@2xample.com", null=False, help_text="Customer email", blank=True
+	)
+	phone = models.CharField(
+		max_length=16, default="09122222222", null=False, help_text="Customer phone number", blank=True
+	)
 	password = models.CharField(max_length=32, default="111", help_text="Customer password", null=True, blank=True)
 
-	class Meta:
-		verbose_name = 'Customer'
-		verbose_name_plural = 'Customers'
+	# Remove unnecessary verbose names
 
 	def __str__(self):
 		return f'Name: {self.name}'
@@ -38,5 +37,5 @@ class Address(BaseModel):
 		return f'Address: {self.street} , {self.city} , {self.country} Postal Code: {self.zipcode}'
 
 	class Meta:
-		verbose_name = 'Address'
+		# Remove unnecessary verbose name
 		verbose_name_plural = 'Addresses'
