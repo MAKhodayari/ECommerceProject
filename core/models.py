@@ -2,13 +2,10 @@ from django.contrib.auth.models import UserManager, AbstractUser
 from django.db import models
 
 
-# Create your models here.
-
 class BaseManager(models.Manager):
 	"""
 	The base manager class
 	"""
-
 	def get_queryset(self):
 		"""
 		Won't show objects while is_delete is True
@@ -55,7 +52,7 @@ class BaseModel(models.Model):
 		self.is_delete = False
 		self.save()
 
-	def active(self):
+	def activate(self):
 		"""
 		Setting is_active True to activating the data
 		:return:
@@ -76,9 +73,14 @@ class BaseDiscount(models.Model):
 	"""
 	Base Model for discounts.
 	"""
+	# Define choices separately
+	DISCOUNT_CHOICES = [
+		('cent', 'percent'),
+		('val', 'value')
+	]
 	amount = models.PositiveIntegerField(default=0)
 	description = models.CharField(max_length=70)
-	type = models.CharField(max_length=5, choices=[('cent', 'percent'), ('val', 'value')], null=False)
+	type = models.CharField(max_length=5, choices=DISCOUNT_CHOICES, null=False)
 
 	class Meta:
 		"""
@@ -91,7 +93,6 @@ class MyUserManager(UserManager):
 	"""
 	Creating a new user manager for our custom django user.
 	"""
-
 	def create_superuser(self, username=None, email=None, password=None, **extra_fields):
 		"""
 		Override this method to create customizing django superuser.
@@ -131,6 +132,4 @@ class User(AbstractUser):
 		:return:
 		"""
 		self.username = self.phone
-		# if User.objects.filter(id=self.id):
-		#     self.set_password(self.password)
 		super().save(*args, **kwargs)

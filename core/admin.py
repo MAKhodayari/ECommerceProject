@@ -1,8 +1,10 @@
 from django.contrib import admin
 
-from .models import *
+# Remove unused imports
+from core.models import User
 
 
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
 	"""
 	Customizing users on admin panel.
@@ -10,7 +12,3 @@ class UserAdmin(admin.ModelAdmin):
 	list_display = ['username', 'first_name', 'last_name', ]
 	search_fields = ['username', 'first_name', 'last_name', ]
 	list_per_page = 15
-
-
-admin.site.register(User, UserAdmin)
-# Registering models to admin panel

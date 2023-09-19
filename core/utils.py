@@ -55,7 +55,7 @@ def cookie_to_database(request):
 
 
 def change_cart_item_count(request, product_id, count):
-	""""
+	"""
 	Reads cookie data from user request and changes OrderItem count for the current user.
 	:param count:
 	:param product_id:
@@ -74,13 +74,9 @@ def remove_cart_item_count(request, product_id):
 	:param product_id:
 	:param request:
 	"""
+	# Remove prints
 	product = request.COOKIES.get('product')
 	jsoned = json.loads(product)
-	print('proid', product_id)
 	if product_id in jsoned.keys():
-		print('proid', product_id)
-		print('jsoned', jsoned)
-		print('product', product)
 		del jsoned[str(product_id)]
-		print('jsoned2', jsoned)
 		return json.dumps(jsoned)
