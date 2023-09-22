@@ -5,7 +5,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, RedirectView, TemplateView, ListView
 from rest_framework.generics import CreateAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.viewsets import ModelViewSet
