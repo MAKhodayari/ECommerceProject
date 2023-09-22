@@ -1,5 +1,7 @@
 import json
 
+from django.db.models import Sum
+
 from order.models import Order, OrderItem
 
 
@@ -11,22 +13,26 @@ def cart_number(request):
 	"""
 	if request.user.is_authenticated:
 		try:
-			order = Order.objects.filter(customer__user=request.user, status_id=1)[0]
-		except:
+			# Use get for just one object
+			order = Order.objects.get(customer__user=request.user, status_id=1)
+		# Add exception handler
+		except Order.DoesNotExist:
 			return {'number': 0}
-		order_item = OrderItem.objects.filter(order=order)
-		number = 0
-		for item in order_item:
-			number += item.count
-		return {'number': number}
+		else:
+			# Use aggregation to return cart number
+			order_item = OrderItem.objects.filter(order=order).aggregate(Sum('count'))
+			if order_item['count__sum'] is None:
+				return {'number': 0}
+			return {'number': order_item['count__sum']}
 	else:
-		# if user is not authenticated.
 		cookie = request.COOKIES.get('product')
 		try:
-			number = 0
 			jsoned = json.loads(cookie)
-			for item in jsoned.values():
-				number += item
-			return {'number': number}
-		except:
+		# Add exception handler
+		except json.JSONDecodeError:
 			return {'number': 0}
+		else:
+			# Use sum to get number of cart items
+			number = sum(jsoned.values())
+			print(number)
+			return {'number': number}

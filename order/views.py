@@ -1,4 +1,3 @@
-# Create your views here.
 from django.http import HttpResponse
 from django.views.generic import ListView
 from rest_framework import viewsets, generics
@@ -7,8 +6,10 @@ from rest_framework.response import Response
 from core.utils import set_product_cookie, get_cookie, change_cart_item_count, remove_cart_item_count
 from customer.models import Customer, Address
 from order.serilizers import OrderSerializer, CouponSerializer
-from .models import OrderItem, Order, Coupon
-from .serilizers import OrderItemSerializer
+
+# Better imports
+from order.models import OrderItem, Order, Coupon
+from order.serilizers import OrderItemSerializer
 
 
 class AddCard(viewsets.ModelViewSet):
@@ -49,16 +50,14 @@ class AddCard(viewsets.ModelViewSet):
 		"""
 		if self.request.user.is_authenticated:
 			product = self.request.data['product']
-			# If user is authenticated
 			try:
-				# If the order item doesn't exist.
 				order_item = OrderItem.objects.get(product_id=product, order__customer__user=self.request.user,
 												   order__status_id=1)
 				order_item.count += 1
 				order_item.save()
 				return HttpResponse('done!', status=200)
-			except:
-				# If the order item doesn't exist
+			# Set exception handler
+			except OrderItem.DoesNotExist:
 				user = request.user
 				customers = Customer.objects.get_or_create(user=user)
 				order = Order.objects.get_or_create(customer=customers[0], status_id=1)[0]
@@ -66,7 +65,6 @@ class AddCard(viewsets.ModelViewSet):
 				request.data['order'] = order.id
 				return super().create(request, *args, **kwargs)
 		else:
-			# If the user is not authenticated and uses cookies(anonymous user).
 			cookie = set_product_cookie(request)
 			response = Response(status=201)
 			response.set_cookie('product', cookie)
@@ -89,33 +87,28 @@ class UpdateOrderItem(generics.UpdateAPIView):
 	queryset = Order.objects.all()
 
 	def partial_update(self, request, *args, **kwargs):
+		# Remove prints
 		request.data._mutable = True
-		final_price = int(float(request.data['final_price']))
-		total_price = int(float(request.data['total_price']))
+		final_price = int(request.data['final_price'])
+		# Remove unused total_price
 		coupon_id = request.data['coupon']
-		calc_total = 0
-		for item in OrderItem.objects.filter(order__status_id=1, order__customer__user=self.request.user):
-			calc_total += item.total
+		# calc total in a line
+		calc_total = sum(item.total for item in OrderItem.objects.filter(order__customer__user=self.request.user,
+																		 order__status_id=1))
 		if coupon_id:
-			print('coupon_id', coupon_id)
-			coupon = Coupon.objects.filter(pk=coupon_id)[0]
+			# Use get for one object
+			coupon = Coupon.objects.get(pk=coupon_id)
 			final = coupon.discounted_price(calc_total)
 			if final_price == final:
 				request.data['status'] = 2
 				return super().partial_update(request, *args, **kwargs)
 			else:
-				print('400')
 				return HttpResponse(status=400)
 		else:
-			print(final_price)
-			print(calc_total)
-
 			if final_price == calc_total:
-				print('if final_price == calc_total')
 				request.data['status'] = 2
 				return super().partial_update(request, *args, **kwargs)
 			else:
-				print('else2')
 				return HttpResponse(status=400)
 
 
@@ -135,8 +128,8 @@ class OrderItemList(ListView):
 		"""
 		if self.request.user.is_authenticated:
 			user = self.request.user
-			customers = Customer.objects.get_or_create(user=user)
-			order = Order.objects.get_or_create(customer=customers[0], status_id=1)[0]
+			customers = Customer.objects.get_or_create(user=user)[0]
+			order = Order.objects.get_or_create(customer=customers, status_id=1)[0]
 			return order.orderitem_set.all()
 		else:
 			if get_cookie(self.request) == 1:
@@ -151,28 +144,23 @@ class OrderItemList(ListView):
 		:param kwargs:
 		:return:
 		"""
+		total = 0
 		if self.request.user.is_authenticated:
-			total = 0
-			for item in OrderItem.objects.filter(order__customer__user=self.request.user, order__status_id=1):
-				total += item.total
-			kwargs['total'] = total
-			kwargs['order'] = Order.objects.filter()
+			# Calc total in a line
+			total = sum(item.total for item in OrderItem.objects.filter(order__customer__user=self.request.user,
+																		order__status_id=1))
 			kwargs['address'] = Address.objects.filter(customer__user=self.request.user)
-			kwargs['final'] = total
-			return super().get_context_data(object_list=object_list, **kwargs)
 		elif self.request.user.is_anonymous:
-			total = 0
 			try:
 				for item in get_cookie(self.request):
 					total += item.total
-				kwargs['total'] = total
-				kwargs['order'] = Order.objects.filter()
-				# kwargs['address'] = Address.objects.filter(customer__user=self.request.user)
-				kwargs['final'] = total
-				return super().get_context_data(object_list=object_list, **kwargs)
 			except:
 				kwargs['new'] = 'new'
-				return super().get_context_data(object_list=object_list, **kwargs)
+		# Move this here to avoid redundancy
+		kwargs['total'] = total
+		kwargs['order'] = Order.objects.all()
+		kwargs['final'] = total
+		return super().get_context_data(object_list=object_list, **kwargs)
 
 
 class CouponView(generics.RetrieveAPIView):
@@ -199,11 +187,11 @@ class CouponImplantView(generics.RetrieveUpdateDestroyAPIView):
 		:return:
 		"""
 		try:
+			# Remove prints
 			self.request.data._mutable = True
 			coupon = Coupon.objects.get(code=self.request.data['coupon'])
 			request.data['coupon'] = coupon.id
-			print('coupon', coupon.id)
 			return super().partial_update(request, *args, **kwargs)
-		except Exception as e:
-			print(e)
+		# Set exception handler
+		except Coupon.DoesNotExist:
 			return HttpResponse('No such code', status=400)

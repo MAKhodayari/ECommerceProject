@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 from core.models import BaseDiscount, BaseModel
 from customer.models import Customer, Address
 from product.models import Product
@@ -12,9 +11,7 @@ class Coupon(BaseDiscount):
 	"""
 	code = models.CharField(max_length=50, help_text='Coupon Code', unique=True)
 
-	class Meta:
-		verbose_name = 'Coupon'
-		verbose_name_plural = 'Coupons'
+	# Remove unnecessary verbose names
 
 	def __str__(self):
 		return f"Coupon type:{self.type} Amount{self.amount} Code{self.code}"
@@ -29,7 +26,7 @@ class Coupon(BaseDiscount):
 			if price < self.amount:
 				# More discount than price
 				return price
-			return int(price - int(self.amount))
+			return price - self.amount
 		elif self.type == "cent":
 			return price - int((self.amount / 100) * price)
 
@@ -38,12 +35,16 @@ class Status(BaseModel):
 	"""
 	The status model.
 	"""
-	title = models.CharField(max_length=10,
-							 choices=[('new', 'New'), ('check', 'Check Out'), ('paid', 'Paid'), ('failed', 'Failed')],
-							 default='new', help_text='Status Options')
+	STATUS_CHOICES = [
+		('new', 'New'),
+		('check', 'Check Out'),
+		('paid', 'Paid'),
+		('failed', 'Failed')
+	]
+	title = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new', help_text='Status Options')
 
 	class Meta:
-		verbose_name = 'Status'
+		# Remove unnecessary verbose name
 		verbose_name_plural = 'Status'
 
 	def __str__(self):
@@ -61,9 +62,7 @@ class Order(BaseModel):
 	final_price = models.PositiveIntegerField(default=0, help_text='Final price after using coupon code')
 	address = models.ForeignKey(to=Address, on_delete=models.PROTECT, null=True, blank=True)
 
-	class Meta:
-		verbose_name = 'Order'
-		verbose_name_plural = 'Orders'
+	# Remove unnecessary verbose names
 
 	def __str__(self):
 		return f"Order for customer: {self.customer} Status: {self.status}"
@@ -77,9 +76,7 @@ class OrderItem(BaseModel):
 	order = models.ForeignKey(to=Order, on_delete=models.PROTECT)
 	count = models.PositiveIntegerField(default=1, help_text='Count of order items')
 
-	class Meta:
-		verbose_name = 'OrderItem'
-		verbose_name_plural = 'OrderItems'
+	# Remove unnecessary verbose names
 
 	def __str__(self):
 		return f"Product: {self.product} X{self.count}"
