@@ -34,5 +34,4 @@ def cart_number(request):
 		else:
 			# Use sum to get number of cart items
 			number = sum(jsoned.values())
-			print(number)
 			return {'number': number}
