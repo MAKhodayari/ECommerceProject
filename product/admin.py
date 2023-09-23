@@ -1,37 +1,35 @@
 from django.contrib import admin
 
 # Better import
+from core.admin import BaseModelAdmin
 from product.models import *
 
 
 # Register first
 @admin.register(Category)
-class CategoryShow(admin.ModelAdmin):
+class CategoryShow(BaseModelAdmin):
 	"""
 	An admin model class for costuming categories on admin panel.
 	"""
 	list_display = ['name']
 	search_fields = ['name']
-	list_per_page = 15
 
 
 @admin.register(Comment)
-class CommentShow(admin.ModelAdmin):
+class CommentShow(BaseModelAdmin):
 	"""
 	An admin model class for costuming comments on admin panel.
 	"""
 	search_fields = ['content']
-	list_per_page = 15
 
 
 @admin.register(Product)
-class ProductShow(admin.ModelAdmin):
+class ProductShow(BaseModelAdmin):
 	"""
 	An admin model class for costuming products on admin panel.
 	"""
 	list_display = ['name', 'price']
 	search_fields = ['name']
-	list_per_page = 15
 
 
 @admin.register(Discount)
@@ -45,10 +43,9 @@ class DiscountShow(admin.ModelAdmin):
 
 
 @admin.register(Brand)
-class BrandShow(admin.ModelAdmin):
+class BrandShow(BaseModelAdmin):
 	"""
 	An admin model class for costuming brands on admin panel.
 	"""
 	list_display = ['name']
 	search_fields = ['name']
-	list_per_page = 15

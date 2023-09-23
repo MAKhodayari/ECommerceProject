@@ -1,5 +1,7 @@
 import json
 
+from django.apps import apps
+
 from customer.models import Customer
 from order.models import OrderItem, Order
 
@@ -80,3 +82,26 @@ def remove_cart_item_count(request, product_id):
 	if product_id in jsoned.keys():
 		del jsoned[str(product_id)]
 		return json.dumps(jsoned)
+
+
+def queryset_id_name(queryset):
+	"""
+	Extracts object ID and their associated model name for admin actions
+	:param queryset:
+	:return: object_ids and model_name
+	"""
+	object_ids = list(queryset.values_list('id', flat=True))
+	model_name = queryset.model.__name__
+	return object_ids, model_name
+
+
+def get_selected_objects(model_name, object_ids):
+	"""
+	Use object IDs and model name to filter selected objects
+	:param model_name:
+	:param object_ids:
+	:return: Selected objects
+	"""
+	model = apps.get_model('ecommerce', model_name)
+	objs = model.objects.filter(id__in=object_ids)
+	return objs
